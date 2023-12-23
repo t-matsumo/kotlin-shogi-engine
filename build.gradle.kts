@@ -10,6 +10,9 @@ repositories {
 }
 
 dependencies {
+    implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.8.0-RC2"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
 
