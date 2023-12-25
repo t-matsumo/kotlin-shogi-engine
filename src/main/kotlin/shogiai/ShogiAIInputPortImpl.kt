@@ -1,4 +1,4 @@
-package ShogiAI
+package shogiai
 
 import java.io.BufferedReader
 

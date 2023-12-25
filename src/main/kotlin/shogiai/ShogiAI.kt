@@ -1,4 +1,4 @@
-package ShogiAI
+package shogiai
 
 interface ShogiAI {
     fun execute()

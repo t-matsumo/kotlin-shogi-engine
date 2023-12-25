@@ -1,4 +1,4 @@
-package ShogiAI
+package shogiai
 
 interface ShogiAIOutPutPort {
     interface Command {
@@ -16,6 +16,7 @@ interface ShogiAIOutPutPort {
     data object ReadyOK: Command {
         override val commandString = "readyok"
     }
+    data class BestMove(override val commandString: String): Command
 
     fun execute(command: Command)
 }

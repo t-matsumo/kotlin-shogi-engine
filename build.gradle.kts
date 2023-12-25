@@ -16,6 +16,11 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
 
+tasks.withType<JavaCompile> {
+    // これがないと「れさぴょん for Java」の中にあるコメント部分でコンパイルエラーになる。
+    options.encoding = "UTF-8"
+}
+
 tasks.test {
     useJUnitPlatform()
 }
