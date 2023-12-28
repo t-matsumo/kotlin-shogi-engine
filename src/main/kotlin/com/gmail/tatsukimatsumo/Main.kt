@@ -1,10 +1,12 @@
-import infrastructure.InputReaderImpl
-import infrastructure.OutPutWriterImpl
+package com.gmail.tatsukimatsumo
+
+import com.gmail.tatsukimatsumo.infrastructure.InputReaderImpl
+import com.gmail.tatsukimatsumo.infrastructure.OutPutWriterImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import shogiai.ShogiAIImpl
-import shogiengine.usi.ShogiEngineForUSIProtocol
+import com.gmail.tatsukimatsumo.shogiai.ShogiAIImpl
+import com.gmail.tatsukimatsumo.shogiengine.usi.ShogiEngineForUSIProtocol
 import java.io.PrintWriter
 
 

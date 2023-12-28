@@ -1,12 +1,12 @@
-package shogiengine.usi
+package com.gmail.tatsukimatsumo.shogiengine.usi
 
+import com.gmail.tatsukimatsumo.shogiai.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import shogiai.*
-import shogiengine.InputReader
-import shogiengine.OutPutWriter
-import shogiengine.ShogiEngine
+import com.gmail.tatsukimatsumo.shogiengine.InputReader
+import com.gmail.tatsukimatsumo.shogiengine.OutPutWriter
+import com.gmail.tatsukimatsumo.shogiengine.ShogiEngine
 import kotlin.math.min
 
 class ShogiEngineForUSIProtocol(

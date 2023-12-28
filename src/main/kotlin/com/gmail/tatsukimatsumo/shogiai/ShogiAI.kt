@@ -1,4 +1,4 @@
-package shogiai
+package com.gmail.tatsukimatsumo.shogiai
 
 interface ShogiAI {
     suspend fun getProgramName(): ProgramName

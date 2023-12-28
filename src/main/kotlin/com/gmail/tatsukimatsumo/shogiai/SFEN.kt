@@ -1,4 +1,4 @@
-package shogiai
+package com.gmail.tatsukimatsumo.shogiai
 
 @JvmInline
 value class SFEN(private val value: String) {

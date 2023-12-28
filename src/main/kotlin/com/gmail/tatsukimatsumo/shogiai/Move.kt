@@ -1,4 +1,4 @@
-package shogiai
+package com.gmail.tatsukimatsumo.shogiai
 
 sealed interface Move {
     companion object {

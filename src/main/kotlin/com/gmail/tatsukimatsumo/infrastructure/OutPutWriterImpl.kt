@@ -1,6 +1,6 @@
-package infrastructure
+package com.gmail.tatsukimatsumo.infrastructure
 
-import shogiengine.OutPutWriter
+import com.gmail.tatsukimatsumo.shogiengine.OutPutWriter
 import java.io.PrintWriter
 
 class OutPutWriterImpl(private val writer: PrintWriter): OutPutWriter {

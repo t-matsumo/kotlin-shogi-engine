@@ -1,4 +1,4 @@
-package shogiai
+package com.gmail.tatsukimatsumo.shogiai
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

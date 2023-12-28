@@ -1,9 +1,9 @@
-package shogiai
+package com.gmail.tatsukimatsumo.shogiai
 
 @JvmInline
-value class AuthorName(val value: String) {
+value class ProgramName(val value: String) {
     private companion object {
-        val valueRegex = Regex("[\\p{Alnum}-]{1,50}")
+        val valueRegex = Regex("\\p{Alnum}{1,50}")
     }
     init {
         // ここの制約は適当に決めた。

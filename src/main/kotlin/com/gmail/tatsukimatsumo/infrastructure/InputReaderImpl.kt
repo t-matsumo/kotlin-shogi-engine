@@ -1,6 +1,6 @@
-package infrastructure
+package com.gmail.tatsukimatsumo.infrastructure
 
-import shogiengine.InputReader
+import com.gmail.tatsukimatsumo.shogiengine.InputReader
 import java.io.BufferedReader
 
 class InputReaderImpl(private val reader: BufferedReader): InputReader {
