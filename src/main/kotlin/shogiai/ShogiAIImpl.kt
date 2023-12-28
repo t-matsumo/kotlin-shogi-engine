@@ -1,51 +1,40 @@
 package shogiai
 
-import jp.usapyonsoft.lesserpyon.GenerateMoves
-import jp.usapyonsoft.lesserpyon.Kyokumen
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.concurrent.Volatile
 
 class ShogiAIImpl(
-    private val input: ShogiAIInputPort,
-    private val output: ShogiAIOutPutPort,
-    private val coroutineScope: CoroutineScope
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ): ShogiAI {
-    override fun execute() {
-        var currentPosition: ShogiAIInputPort.Position? = null
-        while (true) {
-            when (val command = input.execute()) {
-                is ShogiAIInputPort.USI -> {
-                    output.execute(ShogiAIOutPutPort.IDName)
-                    output.execute(ShogiAIOutPutPort.IDAuthoer)
-                    output.execute(ShogiAIOutPutPort.USIOK)
-                }
-                is ShogiAIInputPort.SetOption -> { /* 何もしない */ }
-                is ShogiAIInputPort.IsReady -> output.execute(ShogiAIOutPutPort.ReadyOK)
-                is ShogiAIInputPort.USINewGame -> { /* 何もしない */ }
-                is ShogiAIInputPort.Position -> { currentPosition = command }
-//                is ShogiAIInputPort.Go -> { // ここで考えて、手を返す
-//                    coroutineScope.launch(Dispatchers.Default) {
-//                        try {
-//                            val bestMoveString= ponderFrom(currentPosition!!)
-//                            withContext(Dispatchers.IO) {
-//                                output.execute(ShogiAIOutPutPort.BestMove(bestMoveString))
-//                            }
-//                        } catch (e: Throwable) {
-//                            // 例外が発生したら負けにする
-//                            withContext(Dispatchers.IO) {
-//                                output.execute(ShogiAIOutPutPort.BestMove("bestmove resign"))
-//                            }
-//                        }
-//                    }
-//                }
-                is ShogiAIInputPort.Gameover -> break
-                else -> error("")
-            }
+    @Volatile
+    private var bestMove = MoveResign
+
+    override suspend fun getProgramName(): ProgramName = withContext(defaultDispatcher) {
+        ProgramName("ShogiAI")
+    }
+
+    override suspend fun getAuthorName(): AuthorName = withContext(defaultDispatcher) {
+        AuthorName("t-matsumo")
+    }
+
+    override suspend fun onPrepareForGame() = withContext(defaultDispatcher) {
+        bestMove = MoveResign
+    }
+
+    override suspend fun onReceivePosition(position: Position) = withContext(defaultDispatcher) {
+        when (position) {
+            is PositionHirate -> bestMove = MoveResign // これを実装する
+            is PositionWithSFEN -> bestMove = MoveResign // 対応していないので投了
         }
     }
 
-    private fun ponderFrom(position: ShogiAIInputPort.Position): String {
-        // 現在の盤面から合法手をすべて洗い出し、
-        // 評価関数を用いて最も良い手を出力する
-        return "3c3d"
+    override suspend fun onStartToPonder(timeLimit: TimeLimit) = withContext(defaultDispatcher) {
+        // いったん何もしない
+    }
+
+    override suspend fun onMove() = withContext(defaultDispatcher) {
+        bestMove
     }
 }

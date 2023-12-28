@@ -1,8 +1,8 @@
 package jp.usapyonsoft.lesserpyon;
 
 public class Te implements Cloneable,Constants {
-  int koma;                 // どの駒が動いたか
-  int from;                 // 動く前の位置（持ち駒の場合、0）
+  public int koma;                 // どの駒が動いたか
+  public int from;                 // 動く前の位置（持ち駒の場合、0）
   int to;                   // 動いた先の位置
   boolean promote;         // 成る場合、true 成らない場合 false
   int capture;              // 取った駒（Kyokumenのback関数で利用する）
