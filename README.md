@@ -10,7 +10,7 @@ USIプロトコルのうち、以下には対応していません
 - go ponderを用いた先読み
 
 # 将棋GUIソフト「将棋所」に思考エンジンとして追加する方法
-事前にリリースページから[image.zip](./image.zip)をダウンロードして、任意の場所に展開しておく。
+事前に、[リリースページ](https://github.com/t-matsumo/kotlin-shogi-engine/releases)にある任意のバージョンのAssetsからimage.zipをダウンロードして、任意の場所に展開しておく。
 
 [将棋GUIソフト「将棋所」](http://shogidokoro.starfree.jp/index.html)のページを参考に「エンジン管理」の画面を表示する。
 
