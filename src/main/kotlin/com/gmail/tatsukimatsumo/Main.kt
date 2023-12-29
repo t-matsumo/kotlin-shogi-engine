@@ -9,7 +9,6 @@ import com.gmail.tatsukimatsumo.shogiai.ShogiAIImpl
 import com.gmail.tatsukimatsumo.shogiengine.usi.ShogiEngineForUSIProtocol
 import java.io.PrintWriter
 
-
 fun main() {
     PrintWriter(System.out.bufferedWriter()).use { writer ->
         System.`in`.bufferedReader().use { reader ->
