@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import com.gmail.tatsukimatsumo.shogiengine.InputReader
 import com.gmail.tatsukimatsumo.shogiengine.OutPutWriter
 import com.gmail.tatsukimatsumo.shogiengine.ShogiEngine
+import java.io.Writer
 import kotlin.math.min
 
 class ShogiEngineForUSIProtocol(
@@ -54,10 +55,14 @@ class ShogiEngineForUSIProtocol(
                             }
                             input.startsWith("position startpos") -> {
                                 val movesStartIndex = input.indexOf("moves")
-                                val moves = input
-                                    .substring(min(movesStartIndex + 6, input.lastIndex))
-                                    .split(" ")
-                                    .map { Move.valueOf(it) }
+                                val moves = if (movesStartIndex != -1) {
+                                    input
+                                        .substring(min(movesStartIndex + 6, input.lastIndex))
+                                        .split(" ")
+                                        .map { Move.valueOf(it) }
+                                } else {
+                                    emptyList()
+                                }
                                 PositionHirate(moves)
                             }
                             else -> error("The command is not defined on USI protocol (value: $input)")

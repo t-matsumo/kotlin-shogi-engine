@@ -3,6 +3,8 @@ package com.gmail.tatsukimatsumo.shogiai
 sealed interface Position {
     val turnFor: Turn
     val moves: List<Move>
+
+    fun lastMoveOrNull(): Move? = moves.lastOrNull()
 }
 data class PositionWithSFEN(private val startPosition: SFEN, override val moves: List<Move>): Position {
     override val turnFor = startPosition.currentTurnFor()

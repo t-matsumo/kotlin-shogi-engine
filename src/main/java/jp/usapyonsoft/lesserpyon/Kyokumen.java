@@ -9,7 +9,7 @@ public class Kyokumen implements Constants,Cloneable {
   int hand[];
   
   // 手番
-  int teban=SENTE;
+  public int teban=SENTE;
   
   // 現在の先手からみた評価値
   int eval=0;
