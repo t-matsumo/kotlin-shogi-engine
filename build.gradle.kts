@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.gmail.tatsukimatsumo"
-version = "1.0-SNAPSHOT"
+version = "0.1.0"
 
 application {
     // jlinkで起動バッチのMainクラスを指定するのに必要
