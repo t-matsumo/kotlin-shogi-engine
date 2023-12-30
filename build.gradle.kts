@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 plugins {
     kotlin("jvm") version "1.9.22"
     id("org.beryx.jlink") version "3.0.1"
@@ -5,12 +7,6 @@ plugins {
 
 group = "com.gmail.tatsukimatsumo"
 version = "1.0.0"
-
-application {
-    // jlinkで起動バッチのMainクラスを指定するのに必要
-    mainClass = "com.gmail.tatsukimatsumo.MainKt"
-    mainModule = "shogiai.main"
-}
 
 repositories {
     mavenCentral()
@@ -41,4 +37,24 @@ tasks.test {
 
 kotlin {
     jvmToolchain(21)
+
+    compilerOptions {
+        progressiveMode = true
+        languageVersion = KotlinVersion.KOTLIN_1_9
+        allWarningsAsErrors = true
+    }
+}
+
+application {
+    // jlinkで起動バッチのMainクラスを指定するのに必要
+    mainClass = "com.gmail.tatsukimatsumo.MainKt"
+    mainModule = "shogiai.main"
+}
+
+jlink {
+    addOptions(
+        "--strip-debug",
+        "--no-header-files",
+        "--no-man-pages"
+    )
 }
