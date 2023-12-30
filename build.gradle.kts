@@ -1,5 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
+val isDebug: String by project
+
 plugins {
     kotlin("jvm") version "1.9.22"
     id("org.beryx.jlink") version "3.0.1"
@@ -22,6 +24,12 @@ dependencies {
 tasks.withType<JavaCompile> {
     // これがないと「れさぴょん for Java」の中にあるコメント部分でコンパイルエラーになる。
     options.encoding = "UTF-8"
+
+    if (isDebug != "true") {
+        options.compilerArgs.add("-g:none")
+        options.compilerArgs.add("-Xpkginfo:nonempty")
+        options.isDebug = false
+    }
 }
 
 tasks.withType<JavaExec> {
