@@ -15,6 +15,8 @@ class ShogiAIImpl(
 ): ShogiAI {
     @Volatile
     private var bestMove: Move = MoveResign
+    @Volatile
+    private var bestTe: Te? = null
 
     private val kyokumen = Kyokumen()
 
@@ -29,6 +31,7 @@ class ShogiAIImpl(
     override suspend fun onPrepareForGame() = withContext(defaultDispatcher) {
         kyokumen.initHirate()
         bestMove = MoveResign
+        bestTe = null
     }
 
     override suspend fun onReceivePosition(position: Position) = withContext(defaultDispatcher) {
@@ -70,36 +73,54 @@ class ShogiAIImpl(
     }
 
     override suspend fun onStartToPonder(timeLimit: TimeLimit) = withContext(defaultDispatcher) {
-        // まだ実装しない
+        val teList = GenerateMoves.generateLegalMoves(kyokumen) as? List<Any>
+        if (teList.isNullOrEmpty()) {
+            bestMove = MoveResign
+            bestTe = null
+        } else {
+            var maxPoint = PieceValue(0)
+
+            for (next in teList) {
+                val te = next as Te
+                var tePoint = PieceValue(0)
+
+                val move = if (te.from == 0) {
+                    // 駒打ち
+                    val koma = Piece.valueOf(te.koma - kyokumen.teban)
+                    val row = Row.valueOf(te.to and 0x0f)
+                    val colums = Column.valueOf(te.to shr 4)
+
+                    MoveDrop("${koma.charValue}*${colums.charValue}${row.charValue}")
+                } else {
+                    // 移動
+                    val fromRow = Row.valueOf(te.from and 0x0f)
+                    val fromColums = Column.valueOf(te.from shr 4)
+
+                    val toRow = Row.valueOf(te.to and 0x0f)
+                    val toColums = Column.valueOf(te.to shr 4)
+
+                    val promote = if (te.promote) "+" else ""
+
+                    if (kyokumen.get(te.to) != 0) {
+                        val opponnentTeban = if (kyokumen.teban == SENTE) GOTE else SENTE
+                        val piece = Piece.valueOf((kyokumen.get(te.to) - opponnentTeban) and 8.inv())
+                        tePoint = piece.pieceValue(false)
+                    }
+                    MovePosition("${fromColums.charValue}${fromRow.charValue}${toColums.charValue}${toRow.charValue}$promote")
+                }
+
+                if (tePoint >= maxPoint) {
+                    bestMove = move
+                    bestTe = te
+                    maxPoint = tePoint
+                }
+            }
+        }
     }
 
     override suspend fun onMove() = withContext(defaultDispatcher) {
-        // とりあえずランダム！！
-        val te = GenerateMoves.generateLegalMoves(kyokumen).randomOrNull() as Te?
-        if (te == null) {
-            MoveResign
-        } else {
-            bestMove = if (te.from == 0) {
-                // 駒打ち
-                val koma = Piece.valueOf(te.koma - kyokumen.teban)
-                val row = Row.valueOf(te.to and 0x0f)
-                val colums = Column.valueOf(te.to shr 4)
-
-                MoveDrop("${koma.charValue}*${colums.charValue}${row.charValue}")
-            } else {
-                // 移動
-                val fromRow = Row.valueOf(te.from and 0x0f)
-                val fromColums = Column.valueOf(te.from shr 4)
-
-                val toRow = Row.valueOf(te.to and 0x0f)
-                val toColums = Column.valueOf(te.to shr 4)
-
-                val promote = if (te.promote) "+" else ""
-                MovePosition("${fromColums.charValue}${fromRow.charValue}${toColums.charValue}${toRow.charValue}$promote")
-            }
-            kyokumen.move(te)
-            kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
-            bestMove
-        }
+        kyokumen.move(bestTe)
+        kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
+        bestMove
     }
 }

@@ -90,23 +90,3 @@ enum class Column(private val intValue: Int) {
         fun valueOf(intValue: Int): Column = Column.entries.first { it.intValue == intValue }
     }
 }
-
-enum class Piece(val charValue: Char, val lesserIntValue: Int) {
-    Lance('L', 2),
-    Night('N', 3),
-    Silver('S', 4),
-    Gold('G', 5),
-    King('K', 8),
-    Bishop('B', 6),
-    Rook('R', 7),
-    Pawn('P', 1);
-
-    companion object {
-        fun valueOf(charValue: Char) = Piece.entries.first { it.charValue == charValue }
-        fun valueOf(lesserIntValue: Int) = Piece.entries.first { it.lesserIntValue == lesserIntValue }
-    }
-}
-
-enum class Promote(private val lesserIntVal: Int) {
-    Promoted(8), NotPromoted(0)
-}
