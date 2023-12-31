@@ -22,4 +22,6 @@ enum class Piece(val charValue: Char, val lesserIntValue: Int, val pieceValue: P
 @JvmInline
 value class PieceValue(val value: Int) {
     operator fun compareTo(other: PieceValue): Int = this.value.compareTo(other.value)
+
+    operator fun plus(other: PieceValue): PieceValue = PieceValue(this.value + other.value)
 }

@@ -73,7 +73,7 @@ class ShogiAIImpl(
     }
 
     override suspend fun onStartToPonder(timeLimit: TimeLimit) = withContext(defaultDispatcher) {
-        val teList = GenerateMoves.generateLegalMoves(kyokumen) as? List<Any>
+        val teList = GenerateMoves.generateLegalMoves(kyokumen).shuffled() as? List<Any>
         if (teList.isNullOrEmpty()) {
             bestMove = MoveResign
             bestTe = null
@@ -114,13 +114,26 @@ class ShogiAIImpl(
                     bestTe = te
                     maxPoint = tePoint
                 }
+
+                // 相手を詰ませるなら、その手を選ぶ
+                kyokumen.move(te)
+                kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
+                if (GenerateMoves.generateLegalMoves(kyokumen).isEmpty()) {
+                    bestMove = move
+                    bestTe = te
+                    maxPoint = tePoint + PieceValue(2000)
+                }
+                kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
+                kyokumen.back(te)
             }
         }
     }
 
     override suspend fun onMove() = withContext(defaultDispatcher) {
-        kyokumen.move(bestTe)
-        kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
+        if (bestTe != null) { // nullはResign
+            kyokumen.move(bestTe)
+            kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
+        }
         bestMove
     }
 }
