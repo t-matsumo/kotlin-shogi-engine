@@ -1,10 +1,13 @@
+import org.beryx.jlink.PrepareMergedJarsDirTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 
 val isDebug: String by project
 
 plugins {
     kotlin("jvm") version "1.9.22"
     id("org.beryx.jlink") version "3.0.1"
+    id("org.barfuin.gradle.taskinfo") version "2.1.0"
 }
 
 group = "com.gmail.tatsukimatsumo"
@@ -12,6 +15,12 @@ version = "1.0.0"
 
 repositories {
     mavenCentral()
+}
+
+buildscript {
+    dependencies {
+        classpath("com.guardsquare:proguard-gradle:7.4.1")
+    }
 }
 
 dependencies {
@@ -52,6 +61,74 @@ kotlin {
         allWarningsAsErrors = true
     }
 }
+
+tasks.register<proguard.gradle.ProGuardTask>("applyProguard") {
+    group = "proguard"
+
+    verbose()
+
+    injars(tasks.jar)
+    outjars("${layout.buildDirectory.get()}/libs/${project.archivesName.get()}-1.0.0-proguarded.jar")
+
+    val javaHome = System.getProperty("java.home")
+    // Automatically handle the Java version of this build.
+    if (System.getProperty("java.version").startsWith("1.")) {
+        // Before Java 9, the runtime classes were packaged in a single jar file.
+        libraryjars("$javaHome/lib/rt.jar")
+    } else {
+        // As of Java 9, the runtime classes are packaged in modular jmod files.
+        libraryjars(
+            // filters must be specified first, as a map
+            mapOf(
+                "jarfilter" to "!**.jar",
+                "filter" to "!module-info.class"
+            ),
+            "$javaHome/jmods/java.base.jmod"
+        )
+    }
+
+    libraryjars(configurations.compileClasspath)
+
+    allowaccessmodification()
+    repackageclasses("a") // in module, the empty package is NG.
+
+    printmapping("${layout.buildDirectory.get()}/proguard-mapping.txt")
+
+    keep(
+        """public final class com.gmail.tatsukimatsumo.MainKt {
+             public static void main(java.lang.String[]);
+        }
+    """
+    )
+    keep("class module-info")
+
+    finalizedBy(tasks.named("deleteInJarForProguard"))
+}
+
+tasks.register<Delete>("deleteInJarForProguard") {
+    group = "proguard"
+    delete(files("build/libs/shogiai-1.0.0.jar"))
+
+    finalizedBy(tasks.named("copyInJarForProguard"))
+}
+tasks.register<Copy>("copyInJarForProguard") {
+    group = "proguard"
+    from("build/libs/shogiai-1.0.0-proguarded.jar")
+    into("build/libs")
+    rename("(.+)-proguarded(.+)", "$1$2")
+    finalizedBy(tasks.named("deleteInJarForProguard2"))
+}
+tasks.register<Delete>("deleteInJarForProguard2") {
+    group = "proguard"
+    delete(files("build/libs/shogiai-1.0.0-proguarded.jar"))
+}
+
+tasks.withType<PrepareMergedJarsDirTask> {
+    mustRunAfter("deleteInJarForProguard2")
+    dependsOn(tasks.named("applyProguard"))
+}
+
+
 
 application {
     // jlinkで起動バッチのMainクラスを指定するのに必要
