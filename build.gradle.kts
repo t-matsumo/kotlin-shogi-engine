@@ -65,10 +65,8 @@ kotlin {
 tasks.register<proguard.gradle.ProGuardTask>("applyProguard") {
     group = "proguard"
 
-    verbose()
-
     injars(tasks.jar)
-    outjars("${layout.buildDirectory.get()}/libs/${project.archivesName.get()}-1.0.0-proguarded.jar")
+    outjars("${layout.buildDirectory.get()}/proguard/${project.archivesName.get()}-$version.jar")
 
     val javaHome = System.getProperty("java.home")
     // Automatically handle the Java version of this build.
@@ -102,33 +100,17 @@ tasks.register<proguard.gradle.ProGuardTask>("applyProguard") {
     )
     keep("class module-info")
 
-    finalizedBy(tasks.named("deleteInJarForProguard"))
-}
-
-tasks.register<Delete>("deleteInJarForProguard") {
-    group = "proguard"
-    delete(files("build/libs/shogiai-1.0.0.jar"))
-
-    finalizedBy(tasks.named("copyInJarForProguard"))
-}
-tasks.register<Copy>("copyInJarForProguard") {
-    group = "proguard"
-    from("build/libs/shogiai-1.0.0-proguarded.jar")
-    into("build/libs")
-    rename("(.+)-proguarded(.+)", "$1$2")
-    finalizedBy(tasks.named("deleteInJarForProguard2"))
-}
-tasks.register<Delete>("deleteInJarForProguard2") {
-    group = "proguard"
-    delete(files("build/libs/shogiai-1.0.0-proguarded.jar"))
+    doLast {
+        project.sync {
+            from("${layout.buildDirectory.get()}/proguard")
+            into("${layout.buildDirectory.get()}/libs")
+        }
+    }
 }
 
 tasks.withType<PrepareMergedJarsDirTask> {
-    mustRunAfter("deleteInJarForProguard2")
     dependsOn(tasks.named("applyProguard"))
 }
-
-
 
 application {
     // jlinkで起動バッチのMainクラスを指定するのに必要
