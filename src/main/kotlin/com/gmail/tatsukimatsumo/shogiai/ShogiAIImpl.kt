@@ -1,10 +1,7 @@
 package com.gmail.tatsukimatsumo.shogiai
 
-import jp.usapyonsoft.lesserpyon.Constants.GOTE
-import jp.usapyonsoft.lesserpyon.Constants.SENTE
-import jp.usapyonsoft.lesserpyon.GenerateMoves
-import jp.usapyonsoft.lesserpyon.Kyokumen
-import jp.usapyonsoft.lesserpyon.Te
+import com.gmail.tatsukimatsumo.adapter.PositionByLesserpyon
+import com.gmail.tatsukimatsumo.adapter.PositionGateWay
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,9 +13,7 @@ class ShogiAIImpl(
     @Volatile
     private var bestMove: Move = MoveResign
     @Volatile
-    private var bestTe: Te? = null
-
-    private val kyokumen = Kyokumen()
+    private var positionGateWay: PositionGateWay = PositionByLesserpyon()
 
     override suspend fun getProgramName(): ProgramName = withContext(defaultDispatcher) {
         ProgramName("ShogiAI")
@@ -29,9 +24,8 @@ class ShogiAIImpl(
     }
 
     override suspend fun onPrepareForGame() = withContext(defaultDispatcher) {
-        kyokumen.initHirate()
+        positionGateWay = PositionByLesserpyon()
         bestMove = MoveResign
-        bestTe = null
     }
 
     override suspend fun onReceivePosition(position: Position) = withContext(defaultDispatcher) {
@@ -40,32 +34,7 @@ class ShogiAIImpl(
                 val lastMove = position.lastMoveOrNull()
                 if (lastMove != null) { // movesが無い時は先手番の初手なので何もしない
                     // 相手の手を反映させる
-                    val te = when (lastMove) {
-                        is MoveDrop -> {
-                            val to = lastMove.dropPositonLesserInt()
-                            Te(
-                                lastMove.dropKoma().lesserIntValue + kyokumen.teban,
-                                0,
-                                to,
-                                false,
-                                0
-                            )
-                        }
-                        is MovePosition -> {
-                            val from = lastMove.fromPositonLesserInt()
-                            val to = lastMove.toPositonLesserInt()
-                            Te(
-                                kyokumen.get(from),
-                                from,
-                                to,
-                                lastMove.promoted(),
-                                kyokumen.get(to)
-                            )
-                        }
-                        MoveResign -> error("This is not expected here.")
-                    }
-                    kyokumen.move(te)
-                    kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
+                    positionGateWay = positionGateWay.moved(lastMove)
                 }
             }
             is PositionWithSFEN -> bestMove = MoveResign // 対応していないので投了
@@ -73,66 +42,31 @@ class ShogiAIImpl(
     }
 
     override suspend fun onStartToPonder(timeLimit: TimeLimit) = withContext(defaultDispatcher) {
-        val teList = GenerateMoves.generateLegalMoves(kyokumen).shuffled() as? List<Any>
-        if (teList.isNullOrEmpty()) {
-            bestMove = MoveResign
-            bestTe = null
-        } else {
-            var maxPoint = PieceValue(0)
+        val legalMoves = positionGateWay.legalMoves().shuffled()
 
-            for (next in teList) {
-                val te = next as Te
-                var tePoint = PieceValue(0)
+        // 探索が打ち切られた時のために、一つ選んでおく
+        bestMove = legalMoves.getOrElse(0) { MoveResign }
 
-                val move = if (te.from == 0) {
-                    // 駒打ち
-                    val koma = Piece.valueOf(te.koma - kyokumen.teban)
-                    val row = Row.valueOf(te.to and 0x0f)
-                    val colums = Column.valueOf(te.to shr 4)
-
-                    MoveDrop("${koma.charValue}*${colums.charValue}${row.charValue}")
-                } else {
-                    // 移動
-                    val fromRow = Row.valueOf(te.from and 0x0f)
-                    val fromColums = Column.valueOf(te.from shr 4)
-
-                    val toRow = Row.valueOf(te.to and 0x0f)
-                    val toColums = Column.valueOf(te.to shr 4)
-
-                    val promote = if (te.promote) "+" else ""
-
-                    if (kyokumen.get(te.to) != 0) {
-                        val opponnentTeban = if (kyokumen.teban == SENTE) GOTE else SENTE
-                        val piece = Piece.valueOf((kyokumen.get(te.to) - opponnentTeban) and 8.inv())
-                        tePoint = piece.pieceValue(false)
-                    }
-                    MovePosition("${fromColums.charValue}${fromRow.charValue}${toColums.charValue}${toRow.charValue}$promote")
-                }
-
-                if (tePoint >= maxPoint) {
-                    bestMove = move
-                    bestTe = te
-                    maxPoint = tePoint
-                }
-
+        var maxPoint = PieceValue(Long.MIN_VALUE)
+        for (move in legalMoves) {
+            val nextPosition = positionGateWay.moved(move)
+            if (nextPosition.isGameOver()) {
                 // 相手を詰ませるなら、その手を選ぶ
-                kyokumen.move(te)
-                kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
-                if (GenerateMoves.generateLegalMoves(kyokumen).isEmpty()) {
-                    bestMove = move
-                    bestTe = te
-                    maxPoint = tePoint + PieceValue(2000)
-                }
-                kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
-                kyokumen.back(te)
+                bestMove = move
+                break
+            }
+
+            val point = if (positionGateWay.turnFor == Turn.FirstPlayer) nextPosition.point else -nextPosition.point
+            if (point >= maxPoint) {
+                bestMove = move
+                maxPoint = point
             }
         }
     }
 
     override suspend fun onMove() = withContext(defaultDispatcher) {
-        if (bestTe != null) { // nullはResign
-            kyokumen.move(bestTe)
-            kyokumen.teban = if (kyokumen.teban == SENTE) GOTE else SENTE
+        if (bestMove !is MoveResign) {
+            positionGateWay = positionGateWay.moved(bestMove)
         }
         bestMove
     }

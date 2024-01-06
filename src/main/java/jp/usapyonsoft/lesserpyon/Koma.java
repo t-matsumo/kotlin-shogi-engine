@@ -1,7 +1,7 @@
 package jp.usapyonsoft.lesserpyon;
 
 // 駒
-class Koma implements Constants,Cloneable {
+public class Koma implements Constants,Cloneable {
   // 駒の種類の定義
   public static final int EMPTY=0;          // 「空」
   public static final int EMP=EMPTY;        // 「空」の別名。
