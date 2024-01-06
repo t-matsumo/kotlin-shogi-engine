@@ -1,7 +1,5 @@
 package com.gmail.tatsukimatsumo.shogiai
 
-import com.gmail.tatsukimatsumo.adapter.PositionByLesserpyon
-import com.gmail.tatsukimatsumo.adapter.PositionGateWay
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,7 +11,7 @@ class ShogiAIImpl(
     @Volatile
     private var bestMove: Move = MoveResign
     @Volatile
-    private var positionGateWay: PositionGateWay = PositionByLesserpyon()
+    private var position: Position = PositionByLesserpyon()
 
     override suspend fun getProgramName(): ProgramName = withContext(defaultDispatcher) {
         ProgramName("ShogiAI")
@@ -24,39 +22,39 @@ class ShogiAIImpl(
     }
 
     override suspend fun onPrepareForGame() = withContext(defaultDispatcher) {
-        positionGateWay = PositionByLesserpyon()
+        position = PositionByLesserpyon()
         bestMove = MoveResign
     }
 
-    override suspend fun onReceivePosition(position: Position) = withContext(defaultDispatcher) {
-        when (position) {
-            is PositionHirate -> {
-                val lastMove = position.lastMoveOrNull()
+    override suspend fun onReceivePosition(positionUSI: PositionUSI) = withContext(defaultDispatcher) {
+        when (positionUSI) {
+            is PositionUSIHirate -> {
+                val lastMove = positionUSI.lastMoveOrNull()
                 if (lastMove != null) { // movesが無い時は先手番の初手なので何もしない
                     // 相手の手を反映させる
-                    positionGateWay = positionGateWay.moved(lastMove)
+                    position = position.moved(lastMove)
                 }
             }
-            is PositionWithSFEN -> bestMove = MoveResign // 対応していないので投了
+            is PositionUSIWithSFEN -> bestMove = MoveResign // 対応していないので投了
         }
     }
 
     override suspend fun onStartToPonder(timeLimit: TimeLimit) = withContext(defaultDispatcher) {
-        val legalMoves = positionGateWay.legalMoves().shuffled()
+        val legalMoves = position.legalMoves().shuffled()
 
         // 探索が打ち切られた時のために、一つ選んでおく
         bestMove = legalMoves.getOrElse(0) { MoveResign }
 
         var maxPoint = PieceValue(Long.MIN_VALUE)
         for (move in legalMoves) {
-            val nextPosition = positionGateWay.moved(move)
+            val nextPosition = position.moved(move)
             if (nextPosition.isGameOver()) {
                 // 相手を詰ませるなら、その手を選ぶ
                 bestMove = move
                 break
             }
 
-            val point = if (positionGateWay.turnFor == Turn.FirstPlayer) nextPosition.point else -nextPosition.point
+            val point = if (position.turnFor == Turn.FirstPlayer) nextPosition.point else -nextPosition.point
             if (point >= maxPoint) {
                 bestMove = move
                 maxPoint = point
@@ -66,7 +64,7 @@ class ShogiAIImpl(
 
     override suspend fun onMove() = withContext(defaultDispatcher) {
         if (bestMove !is MoveResign) {
-            positionGateWay = positionGateWay.moved(bestMove)
+            position = position.moved(bestMove)
         }
         bestMove
     }
