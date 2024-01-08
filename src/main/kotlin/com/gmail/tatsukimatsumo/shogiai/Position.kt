@@ -3,17 +3,16 @@ package com.gmail.tatsukimatsumo.shogiai
 import jp.usapyonsoft.lesserpyon.*
 
 interface Position {
-    val point: PieceValue
     val turnFor: Turn
 
     fun moved(move: Move): Position
+    fun turnChanged(): Position
     fun legalMoves(): List<Move>
     fun getOrNull(row: Row, column: Column): Piece?
     fun isGameOver(): Boolean
 }
 
 class PositionByLesserpyon private constructor(
-    override val point: PieceValue,
     private val kyokumen: Kyokumen
 ): Position {
     override val turnFor: Turn
@@ -21,7 +20,7 @@ class PositionByLesserpyon private constructor(
             return if (kyokumen.teban == Constants.SENTE) Turn.FirstPlayer else Turn.SecondPlayer
         }
 
-    constructor(): this(PieceValue(0), Kyokumen()) {
+    constructor(): this(Kyokumen()) {
         kyokumen.initHirate()
     }
 
@@ -54,23 +53,16 @@ class PositionByLesserpyon private constructor(
             MoveResign -> error("This is not expected here.")
         }
 
-        // 先手基準のポイントを計算
-        val pointDiff = if (move is MovePosition) {
-            val piece = getOrNull(Row.valueOf(te.to and 0x0f), Column.valueOf(te.to shr 4))
-            piece?.pieceValue ?: PieceValue(0)
-        } else {
-            PieceValue(0)
-        }
-        val nextPoint = if (kyokumen.teban == Constants.SENTE) {
-            this.point + pointDiff
-        } else {
-            this.point - pointDiff
-        }
-
         clonedKyokumen.move(te)
         clonedKyokumen.teban = if (clonedKyokumen.teban == Constants.SENTE) Constants.GOTE else Constants.SENTE
 
-        return PositionByLesserpyon(nextPoint, clonedKyokumen)
+        return PositionByLesserpyon(clonedKyokumen)
+    }
+
+    override fun turnChanged(): Position {
+        val clonedKyokumen = kyokumen.clone() as Kyokumen
+        clonedKyokumen.teban = if (clonedKyokumen.teban == Constants.SENTE) Constants.GOTE else Constants.SENTE
+        return PositionByLesserpyon(clonedKyokumen)
     }
 
     override fun legalMoves(): List<Move> = GenerateMoves

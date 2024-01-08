@@ -1,6 +1,8 @@
 package com.gmail.tatsukimatsumo.shogiai
 
 sealed interface Move {
+    fun toPosition(): Pair<Row, Column>
+
     companion object {
         fun valueOf(value: String): Move = when {
             value.contains("*") -> MoveDrop(value)
@@ -24,7 +26,7 @@ data class MovePosition(override val value: String): Move {
         return row.lesserIntValue + column.lesserIntValue
     }
 
-    fun toPosition(): Pair<Row, Column> = Row.valueOf(value[3]) to Column.valueOf(value[2])
+    override fun toPosition(): Pair<Row, Column> = Row.valueOf(value[3]) to Column.valueOf(value[2])
     fun toPositonLesserInt(): Int {
         val (row, column) = toPosition()
         return row.lesserIntValue + column.lesserIntValue
@@ -40,15 +42,18 @@ data class MoveDrop(override val value: String): Move {
         require(valueRegex.matches(value))
     }
 
-    fun dropPosition(): Pair<Row, Column> = Row.valueOf(value[3]) to Column.valueOf(value[2])
+    override fun toPosition(): Pair<Row, Column> = Row.valueOf(value[3]) to Column.valueOf(value[2])
     fun dropPositonLesserInt(): Int {
-        val (row, column) = dropPosition()
+        val (row, column) = toPosition()
         return row.lesserIntValue + column.lesserIntValue
     }
 
     fun dropKoma(): Piece = Piece.valueOf(value.first())
 }
 data object MoveResign: Move {
+    override fun toPosition(): Pair<Row, Column> {
+        error("Not yet implemented")
+    }
     override val value: String = "resign"
 }
 

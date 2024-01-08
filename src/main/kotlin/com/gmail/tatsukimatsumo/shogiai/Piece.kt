@@ -5,7 +5,7 @@ enum class Piece(val charValue: Char, val lesserIntValue: Int, val pieceValue: P
     Knight('N', 3, PieceValue(4)),
     Silver('S', 4, PieceValue(5)),
     Gold('G', 5, PieceValue(6)),
-    King('K', 8, PieceValue(2000)),
+    King('K', 8, PieceValue(0)),
     Bishop('B', 6, PieceValue(9)),
     Rook('R', 7, PieceValue(10)),
     Pawn('P', 1, PieceValue(1)),
@@ -24,10 +24,11 @@ enum class Piece(val charValue: Char, val lesserIntValue: Int, val pieceValue: P
 
 
 @JvmInline
-value class PieceValue(val value: Long) {
-    operator fun compareTo(other: PieceValue): Int = this.value.compareTo(other.value)
+value class PieceValue(val value: Long) : Comparable<PieceValue> {
+    override operator fun compareTo(other: PieceValue): Int = this.value.compareTo(other.value)
 
     operator fun plus(other: PieceValue): PieceValue = PieceValue(this.value + other.value)
     operator fun minus(other: PieceValue): PieceValue = PieceValue(this.value - other.value)
     operator fun unaryMinus(): PieceValue = PieceValue(-this.value)
+    operator fun times(other: PieceValue): PieceValue = PieceValue(this.value * other.value)
 }
