@@ -46,34 +46,75 @@ class ShogiAIImpl(
         bestMove = move
     }
 
+    private val INF = Long.MAX_VALUE / 2
     private fun calcBestMove(startPosition: Position): Move {
-        return startPosition.legalMoves().shuffled().maxByOrNull {  -negaMax(startPosition.moved(it), -calcMovePoint(it, startPosition)) } ?: MoveResign
+        var bestMove: Move = MoveResign
+        var alpha = -INF
+        var beta = INF
+        for (move in startPosition.legalMoves().shuffled()) {
+            val score = -negaAlpha(startPosition.moved(move), -calcMovePoint(move, startPosition), -beta, -alpha)
+            if (score > alpha) {
+                alpha = score
+                bestMove = move
+            }
+        }
+
+        return bestMove
     }
 
-    private val INF = Long.MAX_VALUE / 2
-    private fun negaMax(startPosition: Position, startScore: Long, depth: Int = 0): Long {
+    private fun negaAlpha(startPosition: Position, startScore: Long, alpha: Long, beta: Long, depth: Int = 0): Long {
         val moves = startPosition.legalMoves().shuffled()
 
         if (moves.isEmpty()) {
-            return -INF
+            return -INF + depth // 浅い探索で詰ませるほうが良い
         }
 
-        if (depth == 2) {
+        if (depth == 3) {
             return startScore
         }
 
-        var max = -INF
+        var max = alpha
         for (move in moves) {
-            val score = negaMax(
+            val score = -negaAlpha(
                 startPosition.moved(move),
                 -startScore - calcMovePoint(move, startPosition),
+                -beta,
+                -max,
                 depth + 1
             )
-            max = max(max, -score)
+            max = max(max, score)
+
+            if (max >= beta) {
+                return max
+            }
         }
 
         return max
     }
+
+//    private fun negaMax(startPosition: Position, startScore: Long, depth: Int = 0): Long {
+//        val moves = startPosition.legalMoves().shuffled()
+//
+//        if (moves.isEmpty()) {
+//            return -INF
+//        }
+//
+//        if (depth == 2) {
+//            return startScore
+//        }
+//
+//        var max = -INF
+//        for (move in moves) {
+//            val score = negaMax(
+//                startPosition.moved(move),
+//                -startScore - calcMovePoint(move, startPosition),
+//                depth + 1
+//            )
+//            max = max(max, -score)
+//        }
+//
+//        return max
+//    }
 
     override suspend fun onMove() = withContext(defaultDispatcher) {
         if (bestMove !is MoveResign) {
