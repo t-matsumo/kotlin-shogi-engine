@@ -65,7 +65,7 @@ class PositionByLesserpyon private constructor(
         return PositionByLesserpyon(clonedKyokumen)
     }
 
-    private val _lebalMoves: List<Move> = GenerateMoves
+    override fun legalMoves(): List<Move> = GenerateMoves
         .generateLegalMoves(kyokumen)
         .map {
             val te = it as Te
@@ -89,7 +89,6 @@ class PositionByLesserpyon private constructor(
                 MovePosition("${fromColums.charValue}${fromRow.charValue}${toColums.charValue}${toRow.charValue}$promote")
             }
         }
-    override fun legalMoves(): List<Move> =_lebalMoves
 
     override fun getOrNull(row: Row, column: Column): Piece? {
         return when (val koma = Koma.getKomashu(kyokumen.get(row.lesserIntValue + column.lesserIntValue))) {
